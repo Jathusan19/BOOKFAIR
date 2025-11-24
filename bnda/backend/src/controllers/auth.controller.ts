@@ -1,11 +1,11 @@
 import { Request, Response } from 'express';
-import jwt from 'jsonwebtoken';
+import * as jwt from 'jsonwebtoken';
 import User, { IUser, UserRole } from '../models/User';
 import { config } from '../config/env';
 
 const signToken = (id: string) => {
     return jwt.sign({ id }, config.jwtSecret, {
-        expiresIn: config.jwtExpiresIn,
+        expiresIn: config.jwtExpiresIn as jwt.SignOptions['expiresIn'],
     });
 };
 
@@ -30,7 +30,7 @@ export const register = async (req: Request, res: Response) => {
             role: role || UserRole.VENDOR,
         });
 
-        const token = signToken(user._id as string);
+        const token = signToken(user._id.toString());
 
         res.status(201).json({
             token,
@@ -62,7 +62,7 @@ export const login = async (req: Request, res: Response) => {
             return res.status(401).json({ message: 'Invalid credentials' });
         }
 
-        const token = signToken(user._id as string);
+        const token = signToken(user._id.toString());
 
         res.status(200).json({
             token,
@@ -80,9 +80,11 @@ export const login = async (req: Request, res: Response) => {
     }
 };
 
-export const getMe = async (req: any, res: Response) => {
+import { AuthRequest } from '../middleware/auth.middleware';
+
+export const getMe = async (req: AuthRequest, res: Response) => {
     try {
-        const user = await User.findById(req.user.id);
+        const user = await User.findById(req.user?._id);
         res.status(200).json({
             user: {
                 id: user?._id,
@@ -98,10 +100,10 @@ export const getMe = async (req: any, res: Response) => {
     }
 };
 
-export const updateGenres = async (req: any, res: Response) => {
+export const updateGenres = async (req: AuthRequest, res: Response) => {
     try {
         const { genres } = req.body;
-        const user = await User.findByIdAndUpdate(req.user.id, { genres }, { new: true });
+        const user = await User.findByIdAndUpdate(req.user?._id, { genres }, { new: true });
 
         res.status(200).json({
             user: {

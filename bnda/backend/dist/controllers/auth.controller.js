@@ -41,16 +41,13 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.updateGenres = exports.getMe = exports.login = exports.register = void 0;
-const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
+const jwt = __importStar(require("jsonwebtoken"));
 const User_1 = __importStar(require("../models/User"));
 const env_1 = require("../config/env");
 const signToken = (id) => {
-    return jsonwebtoken_1.default.sign({ id }, env_1.config.jwtSecret, {
+    return jwt.sign({ id }, env_1.config.jwtSecret, {
         expiresIn: env_1.config.jwtExpiresIn,
     });
 };
@@ -71,7 +68,7 @@ const register = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             businessName,
             role: role || User_1.UserRole.VENDOR,
         });
-        const token = signToken(user._id);
+        const token = signToken(user._id.toString());
         res.status(201).json({
             token,
             user: {
@@ -99,7 +96,7 @@ const login = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         if (!user || !(yield user.comparePassword(password))) {
             return res.status(401).json({ message: 'Invalid credentials' });
         }
-        const token = signToken(user._id);
+        const token = signToken(user._id.toString());
         res.status(200).json({
             token,
             user: {
@@ -118,8 +115,9 @@ const login = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
 });
 exports.login = login;
 const getMe = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
     try {
-        const user = yield User_1.default.findById(req.user.id);
+        const user = yield User_1.default.findById((_a = req.user) === null || _a === void 0 ? void 0 : _a._id);
         res.status(200).json({
             user: {
                 id: user === null || user === void 0 ? void 0 : user._id,
@@ -137,9 +135,10 @@ const getMe = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
 });
 exports.getMe = getMe;
 const updateGenres = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
     try {
         const { genres } = req.body;
-        const user = yield User_1.default.findByIdAndUpdate(req.user.id, { genres }, { new: true });
+        const user = yield User_1.default.findByIdAndUpdate((_a = req.user) === null || _a === void 0 ? void 0 : _a._id, { genres }, { new: true });
         res.status(200).json({
             user: {
                 id: user === null || user === void 0 ? void 0 : user._id,
